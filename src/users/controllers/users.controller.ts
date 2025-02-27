@@ -8,13 +8,13 @@ import {
   Patch,
 } from '@nestjs/common';
 
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
 import { CreateUserService } from '../services/create-user.service';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserService } from '../services/update-user.service';
-import { UpdateUserDto } from '../dto/update-user.dto';
 import { DisableUserService } from '../services/disable-user.service';
 import { EnableUserService } from '../services/enable-user.service';
+import { UpdateUserService } from '../services/update-user.service';
 
 @Controller('users')
 export class UsersController {
