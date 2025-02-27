@@ -6,7 +6,10 @@ import {
   ParseIntPipe,
   Put,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
+
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -30,6 +33,7 @@ export class UsersController {
     return this.createUserService.execute(createUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
@@ -38,11 +42,13 @@ export class UsersController {
     return this.updateUserService.execute(id, updateUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/disable')
   async disableUser(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return this.disableUserService.execute(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/enable')
   async enableUser(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return this.enableUserService.execute(id);
