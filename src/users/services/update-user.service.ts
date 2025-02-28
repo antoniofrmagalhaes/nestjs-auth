@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
 
+import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
-
-interface UpdateUserDto {
-  name?: string;
-  email?: string;
-}
 
 @Injectable()
 export class UpdateUserService {
@@ -24,8 +24,19 @@ export class UpdateUserService {
       throw new NotFoundException('User not found');
     }
 
+    if (email) {
+      const emailExists = await this.userRepository.findOne({
+        where: { email },
+      });
+
+      if (emailExists && emailExists.id !== id) {
+        throw new ConflictException('Email already in use');
+      }
+
+      user.email = email;
+    }
+
     if (name) user.name = name;
-    if (email) user.email = email;
 
     return this.userRepository.save(user);
   }
