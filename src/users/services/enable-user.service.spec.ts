@@ -1,4 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
@@ -52,5 +55,44 @@ describe('EnableUserService', () => {
     jest.spyOn(repository, 'findOne').mockResolvedValue(null);
 
     await expect(service.execute(1)).rejects.toThrow(NotFoundException);
+  });
+
+  it('should only modify the active field and keep other properties unchanged', async () => {
+    const user = {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@email.com',
+      active: false,
+    } as User;
+
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
+    jest.spyOn(repository, 'save').mockResolvedValue({ ...user, active: true });
+
+    const result = await service.execute(1);
+
+    expect(result).toEqual({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      active: true,
+    });
+  });
+
+  it('should throw InternalServerErrorException if database save fails', async () => {
+    const user = {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@email.com',
+      active: false,
+    } as User;
+
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
+    jest.spyOn(repository, 'save').mockImplementation(() => {
+      throw new Error('Database error');
+    });
+
+    await expect(service.execute(1)).rejects.toThrow(
+      InternalServerErrorException,
+    );
   });
 });
