@@ -34,7 +34,7 @@ describe('CreateUserService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create a user', async () => {
+  it('should create a user and not return password', async () => {
     const userDto = {
       name: 'John Doe',
       email: 'john@email.com',
@@ -45,17 +45,17 @@ describe('CreateUserService', () => {
     jest
       .spyOn(bcrypt, 'hash')
       .mockImplementation(() => Promise.resolve(hashedPassword));
-
     jest
       .spyOn(repository, 'create')
       .mockImplementation((user: Partial<User>) => user as User);
     jest.spyOn(repository, 'save').mockResolvedValue({
-      ...userDto,
-      password: hashedPassword,
+      id: 1,
+      name: userDto.name,
+      email: userDto.email,
     } as User);
 
     const result = await service.execute(userDto);
-    expect(result).toEqual({ ...userDto, password: hashedPassword });
+
     expect(repository.create).toHaveBeenCalledWith({
       ...userDto,
       password: hashedPassword,
@@ -64,7 +64,12 @@ describe('CreateUserService', () => {
       ...userDto,
       password: hashedPassword,
     });
-    expect(bcrypt.hash).toHaveBeenCalledWith('123456', 10);
+    expect(result).toEqual({
+      id: 1,
+      name: userDto.name,
+      email: userDto.email,
+    });
+    expect(result).not.toHaveProperty('password');
   });
 
   it('should hash password before saving user', async () => {
@@ -78,18 +83,24 @@ describe('CreateUserService', () => {
     const hashSpy = jest
       .spyOn(bcrypt, 'hash')
       .mockImplementation(() => Promise.resolve(hashedPassword));
-
     jest
       .spyOn(repository, 'create')
       .mockImplementation((user: Partial<User>) => user as User);
     jest.spyOn(repository, 'save').mockResolvedValue({
-      ...userDto,
-      password: hashedPassword,
+      id: 1,
+      name: userDto.name,
+      email: userDto.email,
     } as User);
 
     const result = await service.execute(userDto);
+
     expect(hashSpy).toHaveBeenCalledWith('123456', 10);
-    expect(result.password).toBe(hashedPassword);
+    expect(result).toEqual({
+      id: 1,
+      name: userDto.name,
+      email: userDto.email,
+    });
+    expect(result).not.toHaveProperty('password');
   });
 
   afterEach(() => {

@@ -15,7 +15,11 @@ export class CreateUserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async execute({ name, email, password }: CreateUserDto): Promise<User> {
+  async execute({
+    name,
+    email,
+    password,
+  }: CreateUserDto): Promise<Omit<User, 'password'>> {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = this.userRepository.create({
@@ -23,6 +27,11 @@ export class CreateUserService {
       email,
       password: hashedPassword,
     });
-    return this.userRepository.save(user);
+
+    const savedUser = await this.userRepository.save(user);
+
+    delete savedUser.password;
+
+    return savedUser;
   }
 }
