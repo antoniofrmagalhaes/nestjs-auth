@@ -1,4 +1,9 @@
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
@@ -102,6 +107,55 @@ describe('UpdateUserService', () => {
 
     await expect(service.execute(1, updatedData)).rejects.toThrow(
       ConflictException,
+    );
+  });
+
+  it('should throw BadRequestException if no valid fields are provided', async () => {
+    const user = { id: 1, name: 'John Doe', email: 'john@email.com' } as User;
+    const updatedData = {};
+
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
+
+    await expect(service.execute(1, updatedData)).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('should only modify the name and email fields, keeping other properties unchanged', async () => {
+    const user = {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@email.com',
+      password: 'hashed-password',
+    } as User;
+    const updatedData = { name: 'Jane Doe' };
+
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
+    jest
+      .spyOn(repository, 'save')
+      .mockResolvedValue({ ...user, ...updatedData });
+
+    const result = await service.execute(1, updatedData);
+
+    expect(result).toEqual({
+      id: user.id,
+      name: 'Jane Doe',
+      email: user.email,
+      password: 'hashed-password',
+    });
+  });
+
+  it('should throw InternalServerErrorException if database save fails', async () => {
+    const user = { id: 1, name: 'John Doe', email: 'john@email.com' } as User;
+    const updatedData = { name: 'Jane Doe' };
+
+    jest.spyOn(repository, 'findOne').mockResolvedValue(user);
+    jest.spyOn(repository, 'save').mockImplementation(() => {
+      throw new Error('Database error');
+    });
+
+    await expect(service.execute(1, updatedData)).rejects.toThrow(
+      InternalServerErrorException,
     );
   });
 });

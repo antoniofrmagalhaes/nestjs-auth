@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -24,6 +26,10 @@ export class UpdateUserService {
       throw new NotFoundException('User not found');
     }
 
+    if (!name && !email) {
+      throw new BadRequestException('At least one field must be updated');
+    }
+
     if (email) {
       const emailExists = await this.userRepository.findOne({
         where: { email },
@@ -38,6 +44,10 @@ export class UpdateUserService {
 
     if (name) user.name = name;
 
-    return this.userRepository.save(user);
+    try {
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException('Error saving user to database');
+    }
   }
 }
