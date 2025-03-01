@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
@@ -19,8 +23,12 @@ export class DisableUserService {
       throw new NotFoundException('User not found');
     }
 
-    user.active = false;
+    const updatedUser = { ...user, active: false };
 
-    return this.userRepository.save(user);
+    try {
+      return await this.userRepository.save(updatedUser);
+    } catch (error) {
+      throw new InternalServerErrorException('Error saving user to database');
+    }
   }
 }
